@@ -65,6 +65,12 @@ void StatusCallback(void *cbData, int code, const char *string)
   Serial.flush();
 }
 
+// NFC interrupt handler
+void handleInterrupt() {
+  Serial.println("Interrupt");
+  interruptTriggered = true;
+}
+
 
 void setup()
 {
@@ -101,14 +107,9 @@ void setup()
 
   // Register IRQ
   pinMode(PN532_IRQ, INPUT_PULLUP);
-  nfc.readPassiveTargetIDNonBlocking(PN532_MIFARE_ISO14443A);
+  nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
   delay(500);
   attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);
-}
-
-void handleInterrupt() {
-  Serial.println("Interrupt");
-  interruptTriggered = true;
 }
 
 
@@ -198,7 +199,7 @@ void loop()
   // if (!mp3->isRunning()) nfc.readPassiveTargetIDNonBlocking(PN532_MIFARE_ISO14443A);
 
   if (interruptTriggered == true) {
-    success = nfc.readPassiveTargetIDNonBlockingAfterInterrupt(uid, &uidLength);
+    success = nfc.readDetectedPassiveTargetID(uid, &uidLength);
     delay(500);
     interruptTriggered = false;
     // detachInterrupt(PN532_IRQ);
@@ -227,7 +228,7 @@ void loop()
 
     success = 0;
     
-    nfc.readPassiveTargetIDNonBlocking(PN532_MIFARE_ISO14443A);
+    nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
     
   }
 
