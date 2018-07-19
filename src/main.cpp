@@ -5,10 +5,7 @@
 #include <SPI.h>
 #include "Adafruit_PN532.h"
 
-#include "AudioFileSourceICYStream.h"
-#include "AudioFileSourceBuffer.h"
-#include "AudioGeneratorMP3.h"
-#include "AudioOutputI2S.h"
+#include "nfcPlayer.hpp"
 
 #include "secrets.h"
 
@@ -32,38 +29,14 @@ uint8_t uidLength;                        // Length of the UID (4 or 7 bytes dep
 uint8_t success = 0;
 bool interruptTriggered = false;
 
-// Audio
+
+// Objects
+AudioOutputI2S *out;
+AudioFileSourceBuffer *buff;
 AudioGeneratorMP3 *mp3;
 AudioFileSourceICYStream *file;
-AudioFileSourceBuffer *buff;
-AudioOutputI2S *out;
+nfcPlayer player;
 
-// Called when a metadata event occurs (i.e. an ID3 tag, an ICY block, etc.
-void MDCallback(void *cbData, const char *type, bool isUnicode, const char *string)
-{
-  const char *ptr = reinterpret_cast<const char *>(cbData);
-  (void) isUnicode; // Punt this ball for now
-  // Note that the type and string may be in PROGMEM, so copy them to RAM for printf
-  char s1[32], s2[64];
-  strncpy_P(s1, type, sizeof(s1));
-  s1[sizeof(s1)-1]=0;
-  strncpy_P(s2, string, sizeof(s2));
-  s2[sizeof(s2)-1]=0;
-  Serial.printf("METADATA(%s) '%s' = '%s'\n", ptr, s1, s2);
-  Serial.flush();
-}
-
-// Called when there's a warning or error (like a buffer underflow or decode hiccup)
-void StatusCallback(void *cbData, int code, const char *string)
-{
-  const char *ptr = reinterpret_cast<const char *>(cbData);
-  // Note that the string may be in PROGMEM, so copy it to RAM for printf
-  char s1[64];
-  strncpy_P(s1, string, sizeof(s1));
-  s1[sizeof(s1)-1]=0;
-  Serial.printf("STATUS(%s) '%d' = '%s'\n", ptr, code, s1);
-  Serial.flush();
-}
 
 // NFC interrupt handler
 void handleInterrupt() {
@@ -101,19 +74,19 @@ void setup()
   nfc.SAMConfig();
   Serial.println("Waiting for an ISO14443A Card ...");
 
-  // Init audio
-  out = new AudioOutputI2S();
-  mp3 = new AudioGeneratorMP3();
-
   // Register IRQ
   pinMode(PN532_IRQ, INPUT_PULLUP);
   nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
   delay(500);
   attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);
+
+  out = new AudioOutputI2S();
+  mp3 = new AudioGeneratorMP3();
 }
 
 
-void StopPlaying() {
+
+void stopPlaying(void) {
   if (mp3) {
     if (mp3->isRunning()) {
       mp3->stop();
@@ -133,19 +106,18 @@ void StopPlaying() {
   }
 }
 
-void readAudio() {
-  StopPlaying();
+
+void readAudio(void) {
+  stopPlaying();
   Serial.println("After stop");
   file = new AudioFileSourceICYStream("http://iopush.net/nfcAudio/mp3/LaPetitePouleRousse.mp3");
-  file->RegisterMetadataCB(MDCallback, (void*)"ICY");
+  file->RegisterMetadataCB(player.callbackMetadata, (void*)"ICY");
   buff = new AudioFileSourceBuffer(file, 4096);
-  buff->RegisterStatusCB(StatusCallback, (void*)"buffer");
+  buff->RegisterStatusCB(player.callbackStatus, (void*)"buffer");
   out->SetGain(5.0/100.0);
-  //mp3 = new AudioGeneratorMP3();
-  mp3->RegisterStatusCB(StatusCallback, (void*)"mp3");
+  mp3->RegisterStatusCB(player.callbackStatus, (void*)"mp3");
   mp3->begin(buff, out);
 }
-
 
 void processUid(uint8_t* uid, uint8_t uidLength) {
   WiFiClient client;
@@ -184,7 +156,7 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
     */
     if (lineNumber==10) {
       Serial.println(line);
-      readAudio();
+      player.readAudio(mp3, buff, file, out);
     }
   }
 }
@@ -235,16 +207,15 @@ void loop()
   // Audio stuff
   static int lastms = 0;
 
-  if (mp3->isRunning()) {
+  if (player.isRunning(mp3)) {
     if (millis()-lastms > 1000) {
       lastms = millis();
       Serial.printf("Running for %d ms...\n", lastms);
       Serial.flush();
      }
-    if (!mp3->loop()) mp3->stop();
+    if (!player.loop(mp3)) player.stop(mp3);
   } else {
     Serial.printf("MP3 done\n");
     delay(1000);
   }
 }
-
