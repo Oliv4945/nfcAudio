@@ -17,13 +17,11 @@ class nfcPlayer {
     nfcPlayer();
     static void callbackMetadata(void *cbData, const char *type, bool isUnicode, const char *string);
     static void callbackStatus(void *cbData, int code, const char *string);
-    /*void stopPlaying(void);
-    void readAudio(void);
-  */
-   void readAudio(AudioGeneratorMP3 *mp3, AudioFileSourceBuffer *buff, AudioFileSourceICYStream *file, AudioOutputI2S *out);
-   bool isRunning(AudioGeneratorMP3 *mp3);
-   bool loop(AudioGeneratorMP3 *mp3);
-   bool stop(AudioGeneratorMP3 *mp3);
+    void stopPlaying(AudioGeneratorMP3 *mp3, AudioFileSourceBuffer *buff, AudioFileSourceICYStream *file);
+    void readAudio(AudioGeneratorMP3 *mp3, AudioFileSourceBuffer *buff, AudioFileSourceICYStream *file, AudioOutputI2S *out);
+    bool isRunning(AudioGeneratorMP3 *mp3);
+    bool loop(AudioGeneratorMP3 *mp3);
+    bool stop(AudioGeneratorMP3 *mp3);
   private:
     //AudioGeneratorMP3 *mp3;
     //AudioFileSourceICYStream *file;

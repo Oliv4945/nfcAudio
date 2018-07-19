@@ -85,7 +85,7 @@ void setup()
 }
 
 
-
+/*
 void stopPlaying(void) {
   if (mp3) {
     if (mp3->isRunning()) {
@@ -118,7 +118,7 @@ void readAudio(void) {
   mp3->RegisterStatusCB(player.callbackStatus, (void*)"mp3");
   mp3->begin(buff, out);
 }
-
+*/
 void processUid(uint8_t* uid, uint8_t uidLength) {
   WiFiClient client;
   if (!client.connect(host, port)) {

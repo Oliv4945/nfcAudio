@@ -62,8 +62,8 @@ bool nfcPlayer::stop(AudioGeneratorMP3 *mp3) {
   return mp3->stop();
 }
 
-/*
-void nfcPlayer::stopPlaying(void) {
+
+void nfcPlayer::stopPlaying(AudioGeneratorMP3 *mp3, AudioFileSourceBuffer *buff, AudioFileSourceICYStream *file) {
   if (mp3) {
     if (mp3->isRunning()) {
       mp3->stop();
@@ -82,9 +82,10 @@ void nfcPlayer::stopPlaying(void) {
     file = NULL;
   }
 }
-*/
+
+
 void nfcPlayer::readAudio(AudioGeneratorMP3 *mp3, AudioFileSourceBuffer *buff, AudioFileSourceICYStream *file, AudioOutputI2S *out) {
-  // stopPlaying();
+  stopPlaying(mp3, buff, file);
   Serial.println("After stop");
   file = new AudioFileSourceICYStream("http://iopush.net/nfcAudio/mp3/LaPetitePouleRousse.mp3");
   file->RegisterMetadataCB(callbackMetadata, (void*)"ICY");
