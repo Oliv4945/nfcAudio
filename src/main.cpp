@@ -156,7 +156,7 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
     */
     if (lineNumber==10) {
       Serial.println(line);
-      player.readAudio(mp3, buff, file, out);
+      player.readAudio(buff, file, out);
     }
   }
 }
@@ -207,13 +207,13 @@ void loop()
   // Audio stuff
   static int lastms = 0;
 
-  if (player.isRunning(mp3)) {
+  if (player.isRunning()) {
     if (millis()-lastms > 1000) {
       lastms = millis();
       Serial.printf("Running for %d ms...\n", lastms);
       Serial.flush();
      }
-    if (!player.loop(mp3)) player.stop(mp3);
+    if (!player.loop()) player.stop();
   } else {
     Serial.printf("MP3 done\n");
     delay(1000);
