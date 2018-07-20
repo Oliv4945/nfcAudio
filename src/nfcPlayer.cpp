@@ -14,8 +14,8 @@
 // Constructor
 nfcPlayer::nfcPlayer() {
   // Init audio
-  //out = new AudioOutputI2S();
   mp3 = new AudioGeneratorMP3();
+  volume = 5;
 };
 
 
@@ -59,6 +59,25 @@ bool nfcPlayer::stop(void) {
 }
 
 
+void nfcPlayer::volumeDown(void) {
+  volume -= 1;
+  if (volume < 2) volume = 2;
+  if (out) out->SetGain((float)volume / 100.0);
+  DEBUG("Volume down: ");
+  DEBUGln(volume);
+}
+
+
+void nfcPlayer::volumeUp(void) {
+  volume += 1;
+  if (volume > 15) volume = 15;
+  if (out) out->SetGain((float)volume / 100.0);
+  DEBUG("Volume up: ");
+  DEBUGln(volume);
+}
+
+
+
 void nfcPlayer::stopPlaying() {
   if (mp3) {
     if (mp3->isRunning()) {
@@ -91,7 +110,7 @@ void nfcPlayer::readAudio(String mp3Url) {
   file->RegisterMetadataCB(callbackMetadata, (void*)"ICY");
   buff = new AudioFileSourceBuffer(file, 4096);
   buff->RegisterStatusCB(callbackStatus, (void*)"buffer");
-  out->SetGain(5.0/100.0);
+  out->SetGain((float)volume / 100.0);
   mp3->RegisterStatusCB(callbackStatus, (void*)"mp3");
   mp3->begin(buff, out);
 }

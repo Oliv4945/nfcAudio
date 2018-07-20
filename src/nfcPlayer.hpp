@@ -22,11 +22,14 @@ class nfcPlayer {
     bool isRunning(void);
     bool loop(void);
     bool stop(void);
+    void volumeDown(void);
+    void volumeUp(void);
   private:
     AudioGeneratorMP3 *mp3;
     AudioFileSourceICYStream *file;
     AudioFileSourceBuffer *buff;
     AudioOutputI2S *out;
+    uint8_t volume;
 };
 
 #endif

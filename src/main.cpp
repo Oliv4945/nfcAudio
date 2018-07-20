@@ -78,6 +78,16 @@ void setup() {
 
 
 void processUid(uint8_t* uid, uint8_t uidLength) {
+  Serial.println("processUid");
+  if (memcmp(uid, uidVolumeDown, uidVolumeLen) == 0) {
+    player.volumeDown();
+    return;
+  }
+  if (memcmp(uid, uidVolumeUp, uidVolumeLen) == 0) {
+    player.volumeUp();
+    return;
+  } 
+
   WiFiClient client;
   if (!client.connect(host, port)) {
     Serial.println("connection failed");
