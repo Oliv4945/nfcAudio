@@ -113,8 +113,11 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
     Serial.println(line);
     */
     if (lineNumber==10) {
+      Serial.print("Reading: ");
+      // Remove CR then LF
+      line = line.substring(1,line.length()-1);
       Serial.println(line);
-      player.readAudio();
+      player.readAudio(line);
     }
   }
 }

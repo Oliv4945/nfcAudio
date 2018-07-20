@@ -84,10 +84,10 @@ void nfcPlayer::stopPlaying() {
 }
 
 
-void nfcPlayer::readAudio() {
+void nfcPlayer::readAudio(String mp3Url) {
   stopPlaying();
   out = new AudioOutputI2S();
-  file = new AudioFileSourceICYStream("http://streaming.radio.rtl2.fr/rtl2-1-44-128");
+  file = new AudioFileSourceICYStream(mp3Url.c_str());
   file->RegisterMetadataCB(callbackMetadata, (void*)"ICY");
   buff = new AudioFileSourceBuffer(file, 4096);
   buff->RegisterStatusCB(callbackStatus, (void*)"buffer");

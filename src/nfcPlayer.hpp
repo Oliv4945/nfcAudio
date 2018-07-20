@@ -18,7 +18,7 @@ class nfcPlayer {
     static void callbackMetadata(void *cbData, const char *type, bool isUnicode, const char *string);
     static void callbackStatus(void *cbData, int code, const char *string);
     void stopPlaying();
-    void readAudio();
+    void readAudio(String mp3Url);
     bool isRunning(void);
     bool loop(void);
     bool stop(void);
