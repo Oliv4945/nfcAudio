@@ -6,6 +6,7 @@
     "files.associations": {
         "*.tcc": "cpp",
         "streambuf": "cpp",
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "fstream": "cpp"
     }
 }

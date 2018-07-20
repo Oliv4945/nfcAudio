@@ -31,10 +31,6 @@ bool interruptTriggered = false;
 
 
 // Objects
-AudioOutputI2S *out;
-AudioFileSourceBuffer *buff;
-AudioGeneratorMP3 *mp3;
-AudioFileSourceICYStream *file;
 nfcPlayer player;
 
 
@@ -45,8 +41,7 @@ void handleInterrupt() {
 }
 
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   delay(5000);
   
@@ -79,46 +74,9 @@ void setup()
   nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
   delay(500);
   attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);
-
-  out = new AudioOutputI2S();
-  mp3 = new AudioGeneratorMP3();
 }
 
 
-/*
-void stopPlaying(void) {
-  if (mp3) {
-    if (mp3->isRunning()) {
-      mp3->stop();
-      delete mp3;
-      mp3 = NULL;
-    }
-  }
-  if (buff) {
-    buff->close();
-    delete buff;
-    buff = NULL;
-  }
-  if (file) {
-    file->close();
-    delete file;
-    file = NULL;
-  }
-}
-
-
-void readAudio(void) {
-  stopPlaying();
-  Serial.println("After stop");
-  file = new AudioFileSourceICYStream("http://iopush.net/nfcAudio/mp3/LaPetitePouleRousse.mp3");
-  file->RegisterMetadataCB(player.callbackMetadata, (void*)"ICY");
-  buff = new AudioFileSourceBuffer(file, 4096);
-  buff->RegisterStatusCB(player.callbackStatus, (void*)"buffer");
-  out->SetGain(5.0/100.0);
-  mp3->RegisterStatusCB(player.callbackStatus, (void*)"mp3");
-  mp3->begin(buff, out);
-}
-*/
 void processUid(uint8_t* uid, uint8_t uidLength) {
   WiFiClient client;
   if (!client.connect(host, port)) {
@@ -156,19 +114,16 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
     */
     if (lineNumber==10) {
       Serial.println(line);
-      player.readAudio(buff, file, out);
+      player.readAudio();
     }
   }
 }
 
-void loop()
-{
 
-    
+void loop() {    
   // Wait for an ISO14443A type cards (Mifare, etc.).  When one is found
   // 'uid' will be populated with the UID, and uidLength will indicate
   // if the uid is 4 bytes (Mifare Classic) or 7 bytes (Mifare Ultralight)
-  // if (!mp3->isRunning()) nfc.readPassiveTargetIDNonBlocking(PN532_MIFARE_ISO14443A);
 
   if (interruptTriggered == true) {
     success = nfc.readDetectedPassiveTargetID(uid, &uidLength);
