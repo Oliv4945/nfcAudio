@@ -25,6 +25,7 @@ Adafruit_PN532 nfc(PN532_SS);
 
 
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+uint8_t uidPlaying[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
 uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 uint8_t success = 0;
 bool interruptTriggered = false;
@@ -79,6 +80,7 @@ void setup() {
 
 void processUid(uint8_t* uid, uint8_t uidLength) {
   Serial.println("processUid");
+  // Process volume
   if (memcmp(uid, uidVolumeDown, uidVolumeLen) == 0) {
     player.volumeDown();
     return;
@@ -86,8 +88,19 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   if (memcmp(uid, uidVolumeUp, uidVolumeLen) == 0) {
     player.volumeUp();
     return;
-  } 
+  }
+  // Stop playing if the same card is detected
+  if (memcmp(uid, uidPlaying, uidLength) == 0) {
+    player.stop();
+    // TODO: Should also been unset in nfcPlayer in any stop case
+    memset(uidPlaying, 0, uidLength);
+    return;
+  }
+  // Stop playing if there is current audio 
+  if (player.isRunning()) player.stop();
 
+  // Try to connect to the server in order to get an URL to play
+  // TODO - Embbed URL inside the card ? (card EEPROM size ?)
   WiFiClient client;
   if (!client.connect(host, port)) {
     Serial.println("connection failed");
@@ -125,9 +138,10 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
     if (lineNumber==10) {
       Serial.print("Reading: ");
       // Remove CR then LF
-      line = line.substring(1,line.length()-1);
+      line = line.substring(1,line.length()-1); // TODO - Might be better to move it for each line
       Serial.println(line);
       player.readAudio(line);
+      memcpy(uidPlaying, uid, uidLength);
     }
   }
 }
