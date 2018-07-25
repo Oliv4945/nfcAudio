@@ -12,12 +12,12 @@ Each time an RFID tag is detected:
 ## Libraries
 This project depends on
 * [ESP8266 Audio](https://github.com/earlephilhower/ESP8266Audio) - Wonderfull MP3 decoder
-* [Adafruit PN532](https://github.com/Oliv4945/Adafruit-PN532) - NFC library from Adafruit, which I modified to use interupts. To be published
+* [Adafruit PN532](https://github.com/Oliv4945/Adafruit-PN532/tree/interrupt_spi) - NFC library from Adafruit, which I modified to use interrupts instead of defalut blocking functions. You have to use the "interrupt_spi" branch from my repo until my pull request is merged.
 
 # Hardware
 ## Tags
-I used small stickers as well as standard "credit card" size tag. I use a printed picture with thermal laminated film, but you can buy tags that can be printed if you have corresponding printer.  
-Stickers can also be put underneath objecs, toys, 3D printed things... Lot of fun for my 3 years old kid !
+Small stickers as well as standard "credit card" size tags can be used. I use a printed picture with thermal laminated film, but you can buy tags that can be printed if you have corresponding printer.  
+Stickers can also be put underneath objects, toys, 3D printed things... Lot of fun for my 3 years old kid !
 
 ## Components
 * I2S DAC MAX98357A - From [Adafruit](https://www.adafruit.com/product/3006)
