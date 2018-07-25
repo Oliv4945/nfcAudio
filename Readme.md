@@ -48,4 +48,5 @@ Stickers can also be put underneath objects, toys, 3D printed things... Lot of f
 
 
 ## Case
-Design files are available in [onShape](https://cad.onshape.com/documents/462111829eacaa66e3425406/w/186305e0bc17a139465da4be/e/d87f807332cb58a96165f9d4), or in the DXF folder.  
+Design files are available in [onShape](https://cad.onshape.com/documents/462111829eacaa66e3425406/w/186305e0bc17a139465da4be/e/d87f807332cb58a96165f9d4), or in the [case](https://github.com/Oliv4945/nfcAudio/case) folder.  
+The onShape model is fully parametrized, so all variables can be changed to fit you needs.
