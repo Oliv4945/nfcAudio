@@ -28,6 +28,7 @@ uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
 uint8_t uidPlaying[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
 uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 uint8_t success = 0;
+uint32_t timeoutNfc = 0;
 bool interruptTriggered = false;
 
 
@@ -38,6 +39,7 @@ nfcPlayer player;
 // NFC interrupt handler
 void handleInterrupt() {
   Serial.println("Interrupt");
+  detachInterrupt(PN532_IRQ);
   interruptTriggered = true;
 }
 
@@ -79,6 +81,8 @@ void setup() {
 
 
 void processUid(uint8_t* uid, uint8_t uidLength) {
+  String mp3Url;
+
   Serial.println("processUid");
   // Process volume
   if (memcmp(uid, uidVolumeDown, uidVolumeLen) == 0) {
@@ -91,9 +95,12 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   }
   // Stop playing if the same card is detected
   if (memcmp(uid, uidPlaying, uidLength) == 0) {
-    player.stop();
-    // TODO: Should also been unset in nfcPlayer in any stop case
-    memset(uidPlaying, 0, uidLength);
+    // If timeout, avoid stopping audio bedore the card is removed
+    if (abs(millis() - timeoutNfc) > timeoutBetweenSameCard) {
+      player.stop();
+      // TODO: Should also been unset in nfcPlayer in any stop case
+      memset(uidPlaying, 0, uidLength);
+    }
     return;
   }
   // Stop playing if there is current audio 
@@ -103,7 +110,7 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   // TODO: mifare classic/ultralight
   // TODO: Parsing from the app "NFC Reader" on Android Play store, not only the spec. To be validated
   // Read only the first record
-  /*
+  
   if (uidLength == 7) {
 
     uint8_t headerPage[4];
@@ -127,7 +134,6 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
         Serial.println("NDEF - Well know record");
         if (headerPage[2] == 0x55) {
           Serial.println("NDEF - Well know URI");
-          String mp3Url;
           switch(headerPage[3]) {
             case 0x01:
               mp3Url = "http://www.";
@@ -146,13 +152,10 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
               Serial.print(headerPage[3], HEX);
               Serial.println("' unknown.");
           }
-          Serial.print("mp3Url: ");
-          Serial.println(mp3Url);
+          // Read URL
           uint8_t data[((headerPage[1]-1)/4+1)*4+1];
           for (uint8_t page = 7; page < ((headerPage[1]-1)/4+1) + 7; page ++) {
             nfc.ntag2xx_ReadPage(page, data + (page - 7) * 4);
-            Serial.printf("Page: %d - index: %d - ", page, data + (page - 7) * 4);
-            nfc.PrintHex(data + (page - 7) * 4, 4);
           }
           data[headerPage[1]-1] = '\0';
           nfc.PrintHex(data, 12);
@@ -162,54 +165,57 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
         }
       }
     }
+  }
 
-  }
-  return;*/
-
-  // Try to connect to the server in order to get an URL to play
-  // TODO - Embbed URL inside the card ? (card EEPROM size ?)
-  WiFiClient client;
-  if (!client.connect(host, port)) {
-    Serial.println("connection failed");
-    return;
-  }
-  String url = String("/nfcAudio/uid/0x");
-  for (uint8_t i = 0; i< uidLength; i++) {
-    url += String(uid[i], HEX);
-  }
-  Serial.print("URL: ");
-  Serial.println(url);
-  // Send request
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-               "Host: " + host + "\r\n" +
-               "Connection: close\r\n\r\n"
-    );
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 5000) {
-      Serial.println(">>> Client Timeout !");
-      client.stop();
+  if (mp3Url.length() == 0) {
+    // Try to connect to the server in order to get an URL to play
+    WiFiClient client;
+    if (!client.connect(host, port)) {
+      Serial.println("connection failed");
       return;
     }
-  }
-  // Read all the lines of the reply from server and print them to Serial
-  uint8_t lineNumber = 1;
-  while (client.available()) {
-    String line = client.readStringUntil('\r');
-    lineNumber++;
-    /*
-    Serial.print(lineNumber);
-    Serial.print(" - ");
-    Serial.println(line);
-    */
-    if (lineNumber==10) {
-      Serial.print("Reading: ");
-      // Remove CR then LF
-      line = line.substring(1,line.length()-1); // TODO - Might be better to move it for each line
-      Serial.println(line);
-      player.readAudio(line);
-      memcpy(uidPlaying, uid, uidLength);
+    String url = String("/nfcAudio/uid/0x");
+    for (uint8_t i = 0; i< uidLength; i++) {
+      url += String(uid[i], HEX);
     }
+    Serial.print("URL: ");
+    Serial.println(url);
+    // Send request
+    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+                "Host: " + host + "\r\n" +
+                "Connection: close\r\n\r\n"
+      );
+    unsigned long timeout = millis();
+    while (client.available() == 0) {
+      if (millis() - timeout > 5000) {
+        Serial.println(">>> Client Timeout !");
+        client.stop();
+        return;
+      }
+    }
+    // Read all the lines of the reply from server and print them to Serial
+    uint8_t lineNumber = 1;
+    while (client.available()) {
+      String line = client.readStringUntil('\r');
+      lineNumber++;
+      /*
+      Serial.print(lineNumber);
+      Serial.print(" - ");
+      Serial.println(line);
+      */
+      if (lineNumber==10) {
+        Serial.print("Reading: ");
+        // Remove CR then LF
+        mp3Url = line.substring(1,line.length()-1); // TODO - Might be better to move it for each line
+      }
+    }
+  }
+
+  if (mp3Url.length() > 0) {
+    Serial.printf("Playing: %s\n", mp3Url.c_str());
+    player.readAudio(mp3Url);
+    memcpy(uidPlaying, uid, uidLength);
+    timeoutNfc = millis();
   }
 }
 
@@ -221,9 +227,7 @@ void loop() {
 
   if (interruptTriggered == true) {
     success = nfc.readDetectedPassiveTargetID(uid, &uidLength);
-    delay(500);
     interruptTriggered = false;
-    // detachInterrupt(PN532_IRQ);
   }
   
   if (success) {
@@ -237,20 +241,19 @@ void loop() {
     
     if (uidLength == 4) {
       // We probably have a Mifare Classic card ... 
-      Serial.println("Seems to be a Mifare Classic card (4 byte UID)");
       processUid(uid, 4);
     }
     
     if (uidLength == 7) {
-      // We probably have a Mifare Ultralight card ...
-      Serial.println("Seems to be a Mifare Ultralight tag (7 byte UID)");
+      // We probably have a Mifare Ultralight card or NTAG ...
       processUid(uid, 7);
     }
 
+    // Rearm for next tag, 
     success = 0;
-    
     nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
-    
+    // Reactivate reader interrupt
+    attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);
   }
 
   // Audio stuff
