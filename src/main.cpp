@@ -99,6 +99,73 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   // Stop playing if there is current audio 
   if (player.isRunning()) player.stop();
 
+  // Try to read NTAG2xx memory and extract an URL
+  // TODO: mifare classic/ultralight
+  // TODO: Parsing from the app "NFC Reader" on Android Play store, not only the spec. To be validated
+  // Read only the first record
+  /*
+  if (uidLength == 7) {
+
+    uint8_t headerPage[4];
+    // Read tag type, if any
+    nfc.ntag2xx_ReadPage(4, headerPage);
+    Serial.print("Header 4: ");
+    nfc.PrintHex(headerPage, 4);
+    Serial.println();
+    if (headerPage[1] == 0x03) {
+      Serial.println("NDEF RECORD");
+      // Read header
+      nfc.ntag2xx_ReadPage(5, headerPage);
+      Serial.print("Header 5: ");
+      nfc.PrintHex(headerPage, 4);
+      Serial.println();
+      if ((headerPage[3] && 0x07) == 0x01) {
+        nfc.ntag2xx_ReadPage(6, headerPage);
+        Serial.print("Header 6: ");
+        nfc.PrintHex(headerPage, 4);
+        Serial.println();
+        Serial.println("NDEF - Well know record");
+        if (headerPage[2] == 0x55) {
+          Serial.println("NDEF - Well know URI");
+          String mp3Url;
+          switch(headerPage[3]) {
+            case 0x01:
+              mp3Url = "http://www.";
+              break;
+            case 0x02:
+              mp3Url = "https://www.";
+              break;
+            case 0x03:
+              mp3Url = "http://";
+              break;
+            case 0x04:
+              mp3Url = "https://";
+              break;
+            default:
+              Serial.print("NDEF - Value: '0x");
+              Serial.print(headerPage[3], HEX);
+              Serial.println("' unknown.");
+          }
+          Serial.print("mp3Url: ");
+          Serial.println(mp3Url);
+          uint8_t data[((headerPage[1]-1)/4+1)*4+1];
+          for (uint8_t page = 7; page < ((headerPage[1]-1)/4+1) + 7; page ++) {
+            nfc.ntag2xx_ReadPage(page, data + (page - 7) * 4);
+            Serial.printf("Page: %d - index: %d - ", page, data + (page - 7) * 4);
+            nfc.PrintHex(data + (page - 7) * 4, 4);
+          }
+          data[headerPage[1]-1] = '\0';
+          nfc.PrintHex(data, 12);
+          mp3Url += String((char *) data);
+          Serial.print("NDEF - URL: ");
+          Serial.println(mp3Url);
+        }
+      }
+    }
+
+  }
+  return;*/
+
   // Try to connect to the server in order to get an URL to play
   // TODO - Embbed URL inside the card ? (card EEPROM size ?)
   WiFiClient client;
