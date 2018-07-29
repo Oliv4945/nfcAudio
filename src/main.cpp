@@ -25,7 +25,8 @@ Adafruit_PN532 nfc(PN532_SS);
 
 
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
-uint8_t uidPlaying[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
+uint8_t uidPlaying[]    = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the playing UID
+uint8_t uidWasPlaying[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the previous playing UID
 uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 uint8_t success = 0;
 uint32_t timeoutNfc = 0;
@@ -100,11 +101,18 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
       player.stop();
       // TODO: Should also been unset in nfcPlayer in any stop case
       memset(uidPlaying, 0, uidLength);
+      memcpy(uidWasPlaying, uid, uidLength);
+      timeoutNfc = millis();
     }
     return;
   }
   // Stop playing if there is current audio 
   if (player.isRunning()) player.stop();
+
+  // Avoid playing if we just stopped that tag
+  if ((memcmp(uid, uidWasPlaying, uidLength) == 0) && (abs(millis() - timeoutNfc) < timeoutBetweenSameCard)) {
+      return;
+  }
 
   // Try to read NTAG2xx memory and extract an URL
   // TODO: mifare classic/ultralight
