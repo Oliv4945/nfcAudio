@@ -15,7 +15,7 @@
 nfcPlayer::nfcPlayer() {
   // Init audio
   mp3 = new AudioGeneratorMP3();
-  volume = 5;
+  volume = 6;
 };
 
 

@@ -31,6 +31,7 @@ uint8_t uidLength;                        // Length of the UID (4 or 7 bytes dep
 uint8_t success = 0;
 uint32_t timeoutNfc = 0;
 bool interruptTriggered = false;
+bool readerDisabled = false;
 
 
 // Objects
@@ -39,9 +40,10 @@ nfcPlayer player;
 
 // NFC interrupt handler
 void handleInterrupt() {
-  Serial.println("Interrupt");
   detachInterrupt(PN532_IRQ);
+  Serial.println("Interrupt");
   interruptTriggered = true;
+  readerDisabled = true;
 }
 
 
@@ -97,7 +99,7 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   // Stop playing if the same card is detected
   if (memcmp(uid, uidPlaying, uidLength) == 0) {
     // If timeout, avoid stopping audio bedore the card is removed
-    if (abs(millis() - timeoutNfc) > timeoutBetweenSameCard) {
+    if (abs(millis() - timeoutNfc) > timeoutBetweenCards) {
       player.stop();
       // TODO: Should also been unset in nfcPlayer in any stop case
       memset(uidPlaying, 0, uidLength);
@@ -110,7 +112,7 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   if (player.isRunning()) player.stop();
 
   // Avoid playing if we just stopped that tag
-  if ((memcmp(uid, uidWasPlaying, uidLength) == 0) && (abs(millis() - timeoutNfc) < timeoutBetweenSameCard)) {
+  if ((memcmp(uid, uidWasPlaying, uidLength) == 0) && (abs(millis() - timeoutNfc) < timeoutBetweenCards)) {
       return;
   }
 
@@ -259,9 +261,16 @@ void loop() {
 
     // Rearm for next tag, 
     success = 0;
-    nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
-    // Reactivate reader interrupt
-    attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);
+    
+  }
+
+  if (readerDisabled == true) {
+    // Reactivate reader after timeout
+    if (abs(millis() - timeoutNfc) > timeoutBetweenCards) {
+      readerDisabled = false;
+      nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
+      attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);
+    }
   }
 
   // Audio stuff
