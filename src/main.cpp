@@ -114,7 +114,11 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
   // Avoid playing if we just stopped that tag
   if ((memcmp(uid, uidWasPlaying, uidLength) == 0) && (abs(millis() - timeoutNfc) < timeoutBetweenCards)) {
       return;
+  } else {
+    // If it is an other card, reset uidWasPlaying
+     memset(uidWasPlaying, 0, uidLength);
   }
+  
 
   // Try to read NTAG2xx memory and extract an URL
   // TODO: mifare classic/ultralight
