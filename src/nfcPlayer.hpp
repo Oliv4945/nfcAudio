@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "Arduino.h" // Dependancy for "Serial" object
 
-#include "AudioFileSourceICYStream.h"
+#include "AudioFileSourceHTTPStream.h"
 #include "AudioFileSourceBuffer.h"
 #include "AudioGeneratorMP3.h"
 #include "AudioOutputI2S.h"
@@ -26,7 +26,7 @@ class nfcPlayer {
     void volumeUp(void);
   private:
     AudioGeneratorMP3 *mp3;
-    AudioFileSourceICYStream *file;
+    AudioFileSourceHTTPStream *file;
     AudioFileSourceBuffer *buff;
     AudioOutputI2S *out;
     uint8_t volume;

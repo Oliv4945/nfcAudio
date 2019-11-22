@@ -6,13 +6,13 @@ nfcAudio is a wifi enabled MP3 player with NFC capability. A tag is placed on to
 Each time an RFID tag is detected:  
 1. It is compared to volume tags
 2. If a music is playing with the same tag, stop playing
-3. Else GET an URL with the tag ID
+3. Else GET an URL from embedded NDEF record
 4. If there the file contains an URL to an MP3 file, play it.
 
 ## Libraries
 This project depends on
 * [ESP8266 Audio](https://github.com/earlephilhower/ESP8266Audio) - Wonderfull MP3 decoder
-* [Adafruit PN532](https://github.com/Oliv4945/Adafruit-PN532/tree/interrupt_spi) - NFC library from Adafruit, which I modified to use interrupts instead of defalut blocking functions. You have to use the "interrupt_spi" branch from my repo until my pull request is merged.
+* [Adafruit PN532](https://github.com/Oliv4945/Adafruit-PN532/tree/interrupt_spi) - NFC library from Adafruit, which I modified to use interrupts instead of defalut blocking functions. `interrupt_spi` branch from my repo has to be used until my pull request is merged. (configured by default in `platformio.ini` file)
 
 # Hardware
 ## Tags

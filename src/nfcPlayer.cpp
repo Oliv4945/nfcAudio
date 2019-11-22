@@ -15,7 +15,7 @@
 nfcPlayer::nfcPlayer() {
   // Init audio
   mp3 = new AudioGeneratorMP3();
-  volume = 5;
+  volume = 6;
 };
 
 
@@ -106,11 +106,9 @@ void nfcPlayer::stopPlaying() {
 void nfcPlayer::readAudio(String mp3Url) {
   stopPlaying();
   out = new AudioOutputI2S();
-  file = new AudioFileSourceICYStream(mp3Url.c_str());
-  file->RegisterMetadataCB(callbackMetadata, (void*)"ICY");
+  file = new AudioFileSourceHTTPStream(mp3Url.c_str());
+  file->SetReconnect(3, 500);
   buff = new AudioFileSourceBuffer(file, 4096);
-  buff->RegisterStatusCB(callbackStatus, (void*)"buffer");
   out->SetGain((float)volume / 100.0);
-  mp3->RegisterStatusCB(callbackStatus, (void*)"mp3");
   mp3->begin(buff, out);
 }
