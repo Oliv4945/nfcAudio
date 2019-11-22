@@ -39,9 +39,8 @@ nfcPlayer player;
 
 
 // NFC interrupt handler
-void handleInterrupt() {
+void ICACHE_RAM_ATTR handleInterrupt() {
   detachInterrupt(PN532_IRQ);
-  Serial.println("Interrupt");
   interruptTriggered = true;
   readerDisabled = true;
 }
