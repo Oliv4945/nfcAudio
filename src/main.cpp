@@ -47,7 +47,6 @@ void ICACHE_RAM_ATTR handleInterrupt() {
 
 void setup() {
   Serial.begin(115200);
-  delay(5000);
   
   Serial.println("Connecting to WiFi");
   WiFi.begin(ssid, password);
