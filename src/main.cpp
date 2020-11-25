@@ -26,7 +26,6 @@ Adafruit_PN532 nfc(PN532_SS);
 
 uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the returned UID
 uint8_t uidPlaying[]    = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the playing UID
-uint8_t uidWasPlaying[] = { 0, 0, 0, 0, 0, 0, 0 };  // Buffer to store the previous playing UID
 uint8_t uidLength;                        // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
 uint8_t success = 0;
 uint32_t timeoutNfc = 0;
@@ -48,7 +47,6 @@ void ICACHE_RAM_ATTR handleInterrupt() {
 
 void setup() {
   Serial.begin(115200);
-  delay(5000);
   
   Serial.println("Connecting to WiFi");
   WiFi.begin(ssid, password);
@@ -95,29 +93,13 @@ void processUid(uint8_t* uid, uint8_t uidLength) {
     player.volumeUp();
     return;
   }
-  // Stop playing if the same card is detected
-  if (memcmp(uid, uidPlaying, uidLength) == 0) {
-    // If timeout, avoid stopping audio bedore the card is removed
-    if (abs(millis() - timeoutNfc) > timeoutBetweenCards) {
-      player.stop();
-      // TODO: Should also been unset in nfcPlayer in any stop case
-      memset(uidPlaying, 0, uidLength);
-      memcpy(uidWasPlaying, uid, uidLength);
-      timeoutNfc = millis();
-    }
-    return;
-  }
-  // Stop playing if there is current audio 
+  // Stop playing in all cases
   if (player.isRunning()) player.stop();
 
-  // Avoid playing if we just stopped that tag
-  if ((memcmp(uid, uidWasPlaying, uidLength) == 0) && (abs(millis() - timeoutNfc) < timeoutBetweenCards)) {
-      return;
-  } else {
-    // If it is an other card, reset uidWasPlaying
-     memset(uidWasPlaying, 0, uidLength);
+  // Stop card
+  if (memcmp(uid, uidStop, uidVolumeLen) == 0) {
+    return;
   }
-  
 
   // Try to read NTAG2xx memory and extract an URL
   // TODO: mifare classic/ultralight
@@ -269,7 +251,7 @@ void loop() {
 
   if (readerDisabled == true) {
     // Reactivate reader after timeout
-    if (abs(millis() - timeoutNfc) > timeoutBetweenCards) {
+    if (abs(millis() - timeoutNfc) > timeoutAfterPlay) {
       readerDisabled = false;
       nfc.startPassiveTargetIDDetection(PN532_MIFARE_ISO14443A);
       attachInterrupt(digitalPinToInterrupt(PN532_IRQ), handleInterrupt, FALLING);

@@ -15,7 +15,7 @@
 nfcPlayer::nfcPlayer() {
   // Init audio
   mp3 = new AudioGeneratorMP3();
-  volume = 6;
+  volume = 15;
 };
 
 
@@ -61,7 +61,7 @@ bool nfcPlayer::stop(void) {
 
 void nfcPlayer::volumeDown(void) {
   volume -= 1;
-  if (volume < 2) volume = 2;
+  if (volume < 8) volume = 8;
   if (out) out->SetGain((float)volume / 100.0);
   DEBUG("Volume down: ");
   DEBUGln(volume);
@@ -70,7 +70,7 @@ void nfcPlayer::volumeDown(void) {
 
 void nfcPlayer::volumeUp(void) {
   volume += 1;
-  if (volume > 15) volume = 15;
+  if (volume > 90) volume = 90;
   if (out) out->SetGain((float)volume / 100.0);
   DEBUG("Volume up: ");
   DEBUGln(volume);
